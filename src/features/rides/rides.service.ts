@@ -45,7 +45,7 @@ export class RidesService {
   async createRide(
     userId: string,
     rideData: CreateRideDTO,
-    files?: Express.Multer.File[]
+    files?: any[]
   ): Promise<Ride> {
     // Validate total file size
     if (files && files.length > 0) {

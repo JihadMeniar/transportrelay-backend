@@ -2,6 +2,7 @@
  * Authentication types
  */
 
+import { Request } from 'express';
 import { User } from './user.types';
 
 export interface AuthTokenPayload {
@@ -46,6 +47,6 @@ export interface ChangePasswordDTO {
 }
 
 // For Express Request extension
-export interface AuthRequest extends Express.Request {
+export interface AuthRequest extends Request {
   user?: AuthTokenPayload;
 }

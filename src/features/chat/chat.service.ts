@@ -106,7 +106,7 @@ export async function sendMessageWithAttachment(
   rideId: number,
   userId: string,
   content: string,
-  file: Express.Multer.File
+  file: any
 ): Promise<ChatMessage> {
   try {
     // Validate access and get user role

@@ -96,7 +96,7 @@ export class RidesController {
   createRide = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId;
     const rideData: CreateRideDTO = req.body;
-    const files = req.files as Express.Multer.File[] | undefined;
+    const files = req.files as any[] | undefined;
 
     const ride = await ridesService.createRide(userId, rideData, files);
 

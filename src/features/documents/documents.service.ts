@@ -12,7 +12,7 @@ export class DocumentsService {
   async uploadDocument(
     rideId: number,
     userId: string,
-    file: Express.Multer.File
+    file: any
   ): Promise<RideDocument> {
     // Check if ride exists
     const ride = await ridesRepository.findById(rideId);

@@ -2,6 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
+import { Request } from 'express';
 
 dotenv.config();
 
@@ -26,8 +27,8 @@ const storage = multer.diskStorage({
 
 // File filter for allowed types
 const fileFilter = (
-  _req: Express.Request,
-  file: Express.Multer.File,
+  _req: Request,
+  file: any,
   cb: multer.FileFilterCallback
 ) => {
   const allowedMimeTypes = [

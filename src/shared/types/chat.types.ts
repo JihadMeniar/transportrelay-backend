@@ -3,6 +3,19 @@
  * Frontend path: taxirelay/src/shared/types/chat.ts
  */
 
+// Multer file interface (to avoid dependency on @types/multer)
+export interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+}
+
 export interface MessageAttachment {
   id: string;
   messageId: string;
@@ -39,7 +52,7 @@ export interface CreateMessageDTO {
 export interface CreateMessageWithAttachmentDTO {
   rideId: number;
   content: string;
-  file: Express.Multer.File;
+  file: MulterFile;
 }
 
 // WebSocket message types
