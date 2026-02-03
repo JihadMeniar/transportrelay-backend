@@ -42,6 +42,16 @@ export class SubscriptionsController {
    * Create Stripe checkout session
    */
   createCheckout = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    // Check if Stripe is configured
+    if (!stripe) {
+      res.status(503).json({
+        success: false,
+        message: 'Les paiements ne sont pas disponibles pour le moment. Veuillez réessayer plus tard.',
+        error: 'STRIPE_NOT_CONFIGURED',
+      });
+      return;
+    }
+
     const userId = req.user!.userId;
     const { planId, successUrl, cancelUrl } = req.body;
 
@@ -71,6 +81,16 @@ export class SubscriptionsController {
    * Cancel subscription at period end
    */
   cancelSubscription = asyncHandler(async (req: AuthRequest, res: Response) => {
+    // Check if Stripe is configured
+    if (!stripe) {
+      res.status(503).json({
+        success: false,
+        message: 'Les paiements ne sont pas disponibles pour le moment.',
+        error: 'STRIPE_NOT_CONFIGURED',
+      });
+      return;
+    }
+
     const userId = req.user!.userId;
 
     const subscription = await subscriptionsService.cancelSubscription(userId);
@@ -87,6 +107,16 @@ export class SubscriptionsController {
    * Reactivate cancelled subscription
    */
   reactivateSubscription = asyncHandler(async (req: AuthRequest, res: Response) => {
+    // Check if Stripe is configured
+    if (!stripe) {
+      res.status(503).json({
+        success: false,
+        message: 'Les paiements ne sont pas disponibles pour le moment.',
+        error: 'STRIPE_NOT_CONFIGURED',
+      });
+      return;
+    }
+
     const userId = req.user!.userId;
 
     const subscription = await subscriptionsService.reactivateSubscription(userId);
