@@ -72,8 +72,8 @@ CREATE INDEX IF NOT EXISTS idx_payment_history_user ON payment_history(user_id);
 -- Insert default plans
 INSERT INTO subscription_plans (id, name, description, price_cents, currency, interval, interval_count, ride_limit, features) VALUES
 ('free', 'Gratuit', 'Acces limite pour decouvrir TaxiRelay', 0, 'EUR', 'month', 1, 5, '["5 courses par mois", "Chat avec les chauffeurs", "Notifications basiques"]'),
-('monthly', 'Mensuel', 'Abonnement mensuel sans engagement', 1990, 'EUR', 'month', 1, NULL, '["Courses illimitees", "Chat avec les chauffeurs", "Notifications prioritaires", "Support prioritaire"]'),
-('yearly', 'Annuel', 'Abonnement annuel - 2 mois offerts', 19900, 'EUR', 'year', 1, NULL, '["Courses illimitees", "Chat avec les chauffeurs", "Notifications prioritaires", "Support prioritaire", "2 mois offerts"]')
+('monthly', 'Mensuel', 'Abonnement mensuel sans engagement', 499, 'EUR', 'month', 1, NULL, '["Courses illimitees", "Chat avec les chauffeurs", "Notifications prioritaires", "Support prioritaire"]'),
+('yearly', 'Annuel', '2 mois offerts', 4990, 'EUR', 'year', 1, NULL, '["Courses illimitees", "Chat avec les chauffeurs", "Notifications prioritaires", "Support prioritaire", "2 mois offerts"]')
 ON CONFLICT (id) DO NOTHING;
 
 -- Create subscription record for existing users (free tier)
