@@ -11,7 +11,7 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    buildCommand: npm ci && npm run build && npm run migrate && npm run seed
+    buildCommand: npm ci --include=dev && npm run build && npm run migrate && npm run seed
     startCommand: npm run start:prod
     healthCheckPath: /health
     envVars:
