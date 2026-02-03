@@ -1,0 +1,310 @@
+paths:
+  /chat/rides/{rideId}/messages:
+    get:
+      tags:
+        - Chat
+      summary: Historique des messages
+      description: |
+        Récupère l'historique des messages d'une course.
+        Accessible uniquement au publisher et au taker de la course.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          description: ID de la course
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Numéro de page
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Nombre de messages par page
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+      responses:
+        '200':
+          description: Liste des messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      messages:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ChatMessage'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Accès non autorisé au chat de cette course
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    post:
+      tags:
+        - Chat
+      summary: Envoyer un message texte
+      description: Envoie un message texte dans le chat d'une course acceptée
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          description: ID de la course
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+                  example: Bonjour, je suis en route !
+      responses:
+        '201':
+          description: Message envoyé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ChatMessage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Chat non accessible (course non acceptée ou non autorisé)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /chat/rides/{rideId}/messages/attachment:
+    post:
+      tags:
+        - Chat
+      summary: Envoyer un message avec pièce jointe
+      description: Envoie un message avec un fichier attaché (max 10MB)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          description: ID de la course
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Fichier à envoyer (max 10MB)
+                content:
+                  type: string
+                  description: Texte optionnel accompagnant le fichier
+      responses:
+        '201':
+          description: Message avec pièce jointe envoyé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ChatMessage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Chat non accessible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /chat/rides/{rideId}/count:
+    get:
+      tags:
+        - Chat
+      summary: Nombre de messages
+      description: Retourne le nombre total de messages dans un chat
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          description: ID de la course
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Nombre de messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                        example: 15
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /chat/messages/{messageId}:
+    get:
+      tags:
+        - Chat
+      summary: Détails d'un message
+      description: Récupère les détails d'un message spécifique
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: ID du message (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Détails du message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ChatMessage'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Chat
+      summary: Supprimer un message
+      description: Supprime un message (uniquement par l'auteur du message)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: ID du message (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Message supprimé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Message supprimé
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Non autorisé à supprimer ce message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /chat/messages/{messageId}/attachment:
+    get:
+      tags:
+        - Chat
+      summary: Télécharger une pièce jointe
+      description: Télécharge la pièce jointe d'un message
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: ID du message (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Fichier téléchargé
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Message ou pièce jointe non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

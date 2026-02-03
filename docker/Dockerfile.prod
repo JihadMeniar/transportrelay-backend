@@ -1,0 +1,65 @@
+# ===========================================
+# Production Dockerfile for TaxiRelay Backend
+# Multi-stage build for smaller image size
+# ===========================================
+
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build TypeScript
+RUN npm run build
+
+# Prune dev dependencies
+RUN npm prune --production
+
+# Stage 2: Production
+FROM node:20-alpine AS production
+
+# Security: Run as non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S taxirelay -u 1001
+
+WORKDIR /app
+
+# Install curl for healthchecks
+RUN apk add --no-cache curl
+
+# Copy built application
+COPY --from=builder --chown=taxirelay:nodejs /app/dist ./dist
+COPY --from=builder --chown=taxirelay:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=taxirelay:nodejs /app/package.json ./
+
+# Create directories for uploads and logs
+RUN mkdir -p uploads/documents uploads/attachments logs && \
+    chown -R taxirelay:nodejs uploads logs
+
+# Switch to non-root user
+USER taxirelay
+
+# Environment
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Start the application
+CMD ["node", "dist/server.js"]

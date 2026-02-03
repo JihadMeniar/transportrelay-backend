@@ -1,0 +1,364 @@
+paths:
+  /rides:
+    get:
+      tags:
+        - Rides
+      summary: Liste des courses
+      description: |
+        Récupère la liste des courses avec filtres optionnels.
+        Les données sensibles sont masquées pour les utilisateurs non autorisés.
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: department
+          in: query
+          description: Filtrer par département
+          schema:
+            type: string
+            example: '75'
+        - name: status
+          in: query
+          description: Filtrer par statut
+          schema:
+            type: string
+            enum: [available, accepted, published, completed, cancelled]
+        - name: courseType
+          in: query
+          description: Filtrer par type de course
+          schema:
+            type: string
+            enum: [normal, medical]
+        - name: scheduledDate
+          in: query
+          description: Filtrer par date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: fromDate
+          in: query
+          description: Date de début (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          description: Date de fin (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          description: Numéro de page
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Nombre d'éléments par page
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Liste des courses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      rides:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Ride'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+
+    post:
+      tags:
+        - Rides
+      summary: Publier une course
+      description: |
+        Crée une nouvelle course avec possibilité d'attacher des documents.
+        Utilise multipart/form-data pour l'upload de fichiers.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - zone
+                - department
+                - distance
+                - courseType
+                - scheduledDate
+                - departureTime
+                - arrivalTime
+                - clientName
+                - clientPhone
+                - pickup
+                - destination
+              properties:
+                zone:
+                  type: string
+                  example: Paris Centre
+                department:
+                  type: string
+                  pattern: '^[0-9]{2,3}$'
+                  example: '75'
+                distance:
+                  type: string
+                  example: 15 km
+                courseType:
+                  type: string
+                  enum: [normal, medical]
+                medicalType:
+                  type: string
+                  enum: [hospitalisation, consultation]
+                  description: Requis si courseType = medical
+                scheduledDate:
+                  type: string
+                  format: date
+                  example: '2024-01-20'
+                departureTime:
+                  type: string
+                  pattern: '^[0-2][0-9]:[0-5][0-9]$'
+                  example: '10:00'
+                arrivalTime:
+                  type: string
+                  pattern: '^[0-2][0-9]:[0-5][0-9]$'
+                  example: '11:30'
+                clientName:
+                  type: string
+                  example: Marie Martin
+                clientPhone:
+                  type: string
+                  example: '0698765432'
+                pickup:
+                  type: string
+                  example: 10 Rue de la Paix, 75002 Paris
+                destination:
+                  type: string
+                  example: Hôpital Saint-Louis, Paris
+                documents:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Max 5 fichiers, 10MB total
+      responses:
+        '201':
+          description: Course créée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Ride'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /rides/my-rides:
+    get:
+      tags:
+        - Rides
+      summary: Mes courses
+      description: Récupère les courses publiées ou acceptées par l'utilisateur courant
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des courses de l'utilisateur
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Ride'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /rides/{id}:
+    get:
+      tags:
+        - Rides
+      summary: Détails d'une course
+      description: |
+        Récupère les détails d'une course spécifique.
+        Les informations sensibles sont visibles uniquement pour le publisher ou le taker.
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la course
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détails de la course
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Ride'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Rides
+      summary: Supprimer une course
+      description: Supprime une course (uniquement par le publisher et si la course n'est pas acceptée)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la course
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Course supprimée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Course supprimée avec succès
+        '400':
+          description: Impossible de supprimer cette course
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /rides/{id}/accept:
+    patch:
+      tags:
+        - Rides
+      summary: Accepter une course
+      description: |
+        Accepte une course disponible.
+        Impossible d'accepter sa propre course ou une course déjà acceptée.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la course
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Course acceptée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Ride'
+        '400':
+          description: Impossible d'accepter cette course
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /rides/{id}/status:
+    patch:
+      tags:
+        - Rides
+      summary: Mettre à jour le statut
+      description: Met à jour le statut d'une course (completed ou cancelled)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la course
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [completed, cancelled]
+      responses:
+        '200':
+          description: Statut mis à jour
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Ride'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'

@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: taxirelay_postgres
+    environment:
+      POSTGRES_DB: taxirelay
+      POSTGRES_USER: taxirelay_user
+      POSTGRES_PASSWORD: taxirelay_password
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_INITDB_ARGS: "--auth-host=md5 --auth-local=trust"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../src/database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taxirelay_user -d taxirelay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - taxirelay_network
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: taxirelay_backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://taxirelay_user:taxirelay_password@postgres:5432/taxirelay
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: taxirelay
+      DATABASE_USER: taxirelay_user
+      DATABASE_PASSWORD: taxirelay_password
+      JWT_SECRET: dev-secret-key-change-in-production-minimum-32-chars
+      JWT_REFRESH_SECRET: dev-refresh-secret-key-change-in-production
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:8081
+      WS_CORS_ORIGIN: http://localhost:8081
+    ports:
+      - "3000:3000"
+    volumes:
+      - ..:/app
+      - /app/node_modules
+      - ../uploads:/app/uploads
+      - ../logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run dev
+    networks:
+      - taxirelay_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  taxirelay_network:
+    driver: bridge
