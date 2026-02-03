@@ -27,11 +27,31 @@ export class SubscriptionsService {
    * Get user's subscription status with usage info
    */
   async getSubscriptionStatus(userId: string): Promise<SubscriptionWithUsage> {
+    // Check if user is a priority user (family members get unlimited access)
+    const user = await usersRepository.findById(userId);
+    const isPriorityUser = user?.is_priority === true;
+
     // Get or create subscription
     let subscription = await subscriptionsRepository.getSubscriptionWithPlan(userId);
 
     if (!subscription) {
       subscription = await subscriptionsRepository.createSubscription(userId);
+    }
+
+    // Priority users are treated as having active subscription
+    if (isPriorityUser) {
+      return {
+        subscription: {
+          ...subscription,
+          status: 'active',
+        },
+        usage: {
+          ridesPublished: 0,
+          ridesAccepted: 0,
+          limit: null, // Unlimited
+          remaining: null, // Unlimited
+        },
+      };
     }
 
     // Get usage
@@ -57,6 +77,12 @@ export class SubscriptionsService {
    * Check if user can perform a ride action (publish or accept)
    */
   async canPerformRideAction(userId: string): Promise<{ allowed: boolean; reason?: string; remaining?: number }> {
+    // Check if user is a priority user (family members get unlimited access)
+    const user = await usersRepository.findById(userId);
+    if (user?.is_priority) {
+      return { allowed: true };
+    }
+
     const { subscription, usage } = await this.getSubscriptionStatus(userId);
 
     // Active subscribers have unlimited access
