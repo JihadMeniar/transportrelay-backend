@@ -250,8 +250,13 @@ export async function sendRideStatusNotification(
   });
 }
 
+// Delay for regular users (5 minutes in milliseconds)
+const PRIORITY_DELAY_MS = 5 * 60 * 1000;
+
 /**
  * Send notification to all users in a department when a new ride is published
+ * Priority users receive the notification immediately
+ * Regular users receive it after a 5-minute delay
  */
 export async function sendNewRideNotificationToDepartment(
   department: string,
@@ -261,17 +266,18 @@ export async function sendNewRideNotificationToDepartment(
   distance: string
 ): Promise<void> {
   try {
-    // Get all push tokens for users in this department (excluding the publisher)
-    const tokens = await usersRepository.getPushTokensByDepartment(department, publisherUserId);
+    // Get push tokens separated by priority status
+    const { priority, regular } = await usersRepository.getPushTokensByDepartmentWithPriority(
+      department,
+      publisherUserId
+    );
 
-    if (tokens.length === 0) {
+    if (priority.length === 0 && regular.length === 0) {
       console.log(`[Push] No active push tokens for department ${department}`);
       return;
     }
 
-    // Build messages
-    const messages: ExpoPushMessage[] = tokens.map(token => ({
-      to: token,
+    const notificationPayload = {
       title: `Nouvelle course dans le ${department}`,
       body: `Zone: ${zone} - Distance: ${distance}`,
       data: {
@@ -279,13 +285,40 @@ export async function sendNewRideNotificationToDepartment(
         rideId,
         department,
       },
-      sound: 'default',
+      sound: 'default' as const,
       channelId: 'rides',
-      priority: 'high',
-    }));
+      priority: 'high' as const,
+    };
 
-    await sendPushNotifications(messages);
-    console.log(`[Push] Sent new ride notification to ${tokens.length} users in department ${department}`);
+    // Send to priority users immediately
+    if (priority.length > 0) {
+      const priorityMessages: ExpoPushMessage[] = priority.map(token => ({
+        to: token,
+        ...notificationPayload,
+      }));
+
+      await sendPushNotifications(priorityMessages);
+      console.log(`[Push] Sent new ride notification to ${priority.length} PRIORITY users in department ${department}`);
+    }
+
+    // Schedule notification for regular users after 5 minutes
+    if (regular.length > 0) {
+      console.log(`[Push] Scheduling notification for ${regular.length} regular users in ${PRIORITY_DELAY_MS / 1000}s`);
+
+      setTimeout(async () => {
+        try {
+          const regularMessages: ExpoPushMessage[] = regular.map(token => ({
+            to: token,
+            ...notificationPayload,
+          }));
+
+          await sendPushNotifications(regularMessages);
+          console.log(`[Push] Sent delayed ride notification to ${regular.length} regular users in department ${department}`);
+        } catch (error) {
+          console.error(`[Push] Error sending delayed notification:`, error);
+        }
+      }, PRIORITY_DELAY_MS);
+    }
   } catch (error) {
     console.error(`[Push] Error sending department notification:`, error);
   }

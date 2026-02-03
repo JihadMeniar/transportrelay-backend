@@ -119,6 +119,44 @@ export class UsersController {
       message: 'Push token deactivated successfully',
     });
   });
+
+  /**
+   * POST /api/users/priority
+   * Set user priority status (admin only)
+   * Priority users receive ride notifications 5 minutes before others
+   */
+  setUserPriority = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { email, isPriority } = req.body;
+
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+      return;
+    }
+
+    const result = await usersService.setUserPriority(email, isPriority === true);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+      message: isPriority ? 'Utilisateur defini comme prioritaire' : 'Statut prioritaire retire',
+    });
+  });
+
+  /**
+   * GET /api/users/priority
+   * Get all priority users (admin only)
+   */
+  getPriorityUsers = asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const users = await usersService.getPriorityUsers();
+
+    res.status(200).json({
+      success: true,
+      data: { users },
+    });
+  });
 }
 
 export const usersController = new UsersController();

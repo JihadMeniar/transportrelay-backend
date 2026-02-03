@@ -122,6 +122,39 @@ export class UsersService {
   async getPushTokensByDepartment(department: string, excludeUserId?: string): Promise<string[]> {
     return usersRepository.getPushTokensByDepartment(department, excludeUserId);
   }
+
+  /**
+   * Set user priority status by email
+   * Priority users receive ride notifications 5 minutes before regular users
+   */
+  async setUserPriority(email: string, isPriority: boolean): Promise<{ user: User; isPriority: boolean }> {
+    // Find user by email
+    const user = await usersRepository.findUserByEmailForPriority(email);
+
+    if (!user) {
+      throw new AppError(404, `Utilisateur avec email ${email} non trouve`);
+    }
+
+    // Update priority status
+    const success = await usersRepository.setUserPriority(user.id, isPriority);
+
+    if (!success) {
+      throw new AppError(500, 'Echec de la mise a jour du statut prioritaire');
+    }
+
+    // Get updated user
+    const updatedUserRow = await usersRepository.findById(user.id);
+    const updatedUser = updatedUserRow ? userRowToUser(updatedUserRow) : user;
+
+    return { user: updatedUser, isPriority };
+  }
+
+  /**
+   * Get all priority users
+   */
+  async getPriorityUsers(): Promise<User[]> {
+    return usersRepository.getPriorityUsers();
+  }
 }
 
 export const usersService = new UsersService();

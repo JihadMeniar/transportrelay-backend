@@ -13,6 +13,7 @@ interface UserRow {
   department: string | null;
   role: string;
   is_active: boolean;
+  is_priority: boolean;
   stats_published: number;
   stats_accepted: number;
   rating: number;
@@ -31,6 +32,7 @@ export const userRowToUser = (row: UserRow): User => ({
   department: row.department,
   role: row.role as 'driver' | 'admin',
   isActive: row.is_active,
+  isPriority: row.is_priority || false,
   stats: {
     published: row.stats_published,
     accepted: row.stats_accepted,
@@ -256,6 +258,77 @@ export class UsersRepository {
 
     const result = await pool.query(query, params);
     return result.rows.map(row => row.push_token);
+  }
+
+  /**
+   * Get active push tokens for a department, separated by priority status
+   * Priority users receive notifications before regular users
+   */
+  async getPushTokensByDepartmentWithPriority(
+    department: string,
+    excludeUserId?: string
+  ): Promise<{ priority: string[]; regular: string[] }> {
+    let query = `
+      SELECT pt.push_token, u.is_priority
+      FROM push_tokens pt
+      JOIN users u ON u.id = pt.user_id
+      WHERE u.department = $1
+        AND u.is_active = true
+        AND pt.is_active = true
+    `;
+    const params: any[] = [department];
+
+    if (excludeUserId) {
+      query += ` AND u.id != $2`;
+      params.push(excludeUserId);
+    }
+
+    const result = await pool.query(query, params);
+
+    const priority: string[] = [];
+    const regular: string[] = [];
+
+    for (const row of result.rows) {
+      if (row.is_priority) {
+        priority.push(row.push_token);
+      } else {
+        regular.push(row.push_token);
+      }
+    }
+
+    return { priority, regular };
+  }
+
+  /**
+   * Set user priority status (admin only)
+   */
+  async setUserPriority(userId: string, isPriority: boolean): Promise<boolean> {
+    const result = await pool.query(
+      `UPDATE users SET is_priority = $1, updated_at = NOW() WHERE id = $2`,
+      [isPriority, userId]
+    );
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  /**
+   * Get all priority users
+   */
+  async getPriorityUsers(): Promise<User[]> {
+    const result = await pool.query(
+      `SELECT * FROM users WHERE is_priority = true AND is_active = true ORDER BY name`
+    );
+    return result.rows.map(userRowToUser);
+  }
+
+  /**
+   * Find user by email (for admin to set priority)
+   */
+  async findUserByEmailForPriority(email: string): Promise<User | null> {
+    const result = await pool.query(
+      `SELECT * FROM users WHERE email = $1`,
+      [email]
+    );
+    return result.rows.length > 0 ? userRowToUser(result.rows[0]) : null;
   }
 }
 

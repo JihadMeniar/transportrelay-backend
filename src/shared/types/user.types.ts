@@ -16,6 +16,7 @@ export interface User {
   department: string | null;
   role: 'driver' | 'admin';
   isActive: boolean;
+  isPriority: boolean;
   stats: UserStats;
   createdAt: Date;
   updatedAt: Date;
@@ -61,6 +62,7 @@ export interface UserRow {
   department: string | null;
   role: string;
   is_active: boolean;
+  is_priority: boolean;
   stats_published: number;
   stats_accepted: number;
   rating: number;
@@ -78,6 +80,7 @@ export function userRowToUser(row: UserRow): User {
     department: row.department,
     role: row.role as 'driver' | 'admin',
     isActive: row.is_active,
+    isPriority: row.is_priority || false,
     stats: {
       published: row.stats_published,
       accepted: row.stats_accepted,

@@ -52,6 +52,19 @@ router.post(
 router.delete('/push-token', authenticate, usersController.deactivatePushToken);
 
 /**
+ * POST /api/users/priority
+ * Set user priority status (admin only)
+ * Priority users receive ride notifications 5 minutes before others
+ */
+router.post('/priority', authenticate, usersController.setUserPriority);
+
+/**
+ * GET /api/users/priority
+ * Get all priority users (admin only)
+ */
+router.get('/priority', authenticate, usersController.getPriorityUsers);
+
+/**
  * GET /api/users/:id/stats
  * Get user stats (public)
  */
