@@ -347,9 +347,7 @@ export class RidesRepository {
       uri: row.uri,
       filePath: row.file_path,
       mimeType: row.mime_type,
-      type: row.mime_type,
       sizeBytes: row.size_bytes,
-      size: row.size_bytes,
       uploadedAt: row.uploaded_at,
     }));
   }
@@ -383,9 +381,7 @@ export class RidesRepository {
       uri: row.uri,
       filePath: row.file_path,
       mimeType: row.mime_type,
-      type: row.mime_type,
       sizeBytes: row.size_bytes,
-      size: row.size_bytes,
       uploadedAt: row.uploaded_at,
     };
   }

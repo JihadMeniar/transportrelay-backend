@@ -14,6 +14,8 @@ interface UserRow {
   role: string;
   is_active: boolean;
   is_priority: boolean;
+  referral_code: string;
+  referred_by: string | null;
   stats_published: number;
   stats_accepted: number;
   rating: number;
@@ -33,6 +35,8 @@ export const userRowToUser = (row: UserRow): User => ({
   role: row.role as 'driver' | 'admin',
   isActive: row.is_active,
   isPriority: row.is_priority || false,
+  referralCode: row.referral_code,
+  referredBy: row.referred_by,
   stats: {
     published: row.stats_published,
     accepted: row.stats_accepted,
