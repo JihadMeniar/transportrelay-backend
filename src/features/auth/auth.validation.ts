@@ -33,6 +33,11 @@ export const registerSchema = z.object({
       .min(1, 'Le département est requis')
       .max(3, 'Code département invalide')
       .regex(/^(0[1-9]|[1-8][0-9]|9[0-5]|97[1-6]|2[AB])$/, 'Code département invalide'),
+    referralCode: z
+      .string()
+      .min(1, 'Le code de parrainage est requis')
+      .max(20, 'Code de parrainage invalide')
+      .transform((val) => val.toUpperCase().trim()),
   }),
 });
 

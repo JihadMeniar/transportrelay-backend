@@ -14,16 +14,16 @@ export class RidesController {
     const userId = req.user?.userId;
 
     // Récupérer le département de l'utilisateur si connecté et pas de filtre spécifié
-    let department = req.query.department as string;
-    if (!department && userId) {
-      const userDepartment = await usersService.getUserDepartment(userId);
-      if (userDepartment) {
-        department = userDepartment;
+    let userDepartment = req.query.department as string;
+    if (!userDepartment && userId) {
+      const dept = await usersService.getUserDepartment(userId);
+      if (dept) {
+        userDepartment = dept;
       }
     }
 
     const filters: RideFilters = {
-      department,
+      userDepartment,
       status: req.query.status as any,
       courseType: req.query.courseType as any,
       page: req.query.page ? parseInt(req.query.page as string) : 1,

@@ -14,6 +14,7 @@ import {
   SubscriptionStatus,
 } from '../../shared/types';
 import { usersRepository } from '../users/users.repository';
+import { referralRepository } from '../auth/referral.repository';
 
 export class SubscriptionsService {
   /**
@@ -56,25 +57,30 @@ export class SubscriptionsService {
 
     // Get usage
     const usage = await subscriptionsRepository.getCurrentMonthUsage(userId);
-    const totalRides = usage ? usage.ridesPublished + usage.ridesAccepted : 0;
+    // Only count accepted rides toward the limit (publishing is unlimited)
+    const acceptedRides = usage?.ridesAccepted || 0;
 
     // Determine limit based on subscription
     const plan = subscription.plan || (await subscriptionsRepository.getPlanById('free'));
-    const limit = plan?.rideLimit ?? STRIPE_CONFIG.FREE_RIDES_PER_MONTH;
+    const baseLimit = plan?.rideLimit ?? STRIPE_CONFIG.FREE_RIDES_PER_MONTH;
+
+    // Add referral bonuses for free users
+    const referralBonus = subscription.status === 'active' ? 0 : await referralRepository.getReferralBonusForMonth(userId);
+    const effectiveLimit = baseLimit + referralBonus;
 
     return {
       subscription,
       usage: {
         ridesPublished: usage?.ridesPublished || 0,
-        ridesAccepted: usage?.ridesAccepted || 0,
-        limit: subscription.status === 'active' ? null : limit,
-        remaining: subscription.status === 'active' ? null : Math.max(0, limit - totalRides),
+        ridesAccepted: acceptedRides,
+        limit: subscription.status === 'active' ? null : effectiveLimit,
+        remaining: subscription.status === 'active' ? null : Math.max(0, effectiveLimit - acceptedRides),
       },
     };
   }
 
   /**
-   * Check if user can perform a ride action (publish or accept)
+   * Check if user can accept a ride (limit only applies to accepting, not publishing)
    */
   async canPerformRideAction(userId: string): Promise<{ allowed: boolean; reason?: string; remaining?: number }> {
     // Check if user is a priority user (family members get unlimited access)
@@ -90,21 +96,22 @@ export class SubscriptionsService {
       return { allowed: true };
     }
 
-    // Check free tier limit
-    const limit = usage.limit || STRIPE_CONFIG.FREE_RIDES_PER_MONTH;
-    const totalRides = usage.ridesPublished + usage.ridesAccepted;
+    // Check free tier limit - only count accepted rides (publishing is unlimited)
+    // usage.limit already includes referral bonuses from getSubscriptionStatus()
+    const effectiveLimit = usage.limit || STRIPE_CONFIG.FREE_RIDES_PER_MONTH;
+    const acceptedRides = usage.ridesAccepted;
 
-    if (totalRides >= limit) {
+    if (acceptedRides >= effectiveLimit) {
       return {
         allowed: false,
-        reason: `Vous avez atteint la limite de ${limit} courses gratuites ce mois-ci. Passez a l'abonnement pour continuer.`,
+        reason: `Vous avez atteint la limite de ${effectiveLimit} courses acceptées ce mois-ci. Passez à l'abonnement pour continuer à accepter des courses.`,
         remaining: 0,
       };
     }
 
     return {
       allowed: true,
-      remaining: limit - totalRides,
+      remaining: effectiveLimit - acceptedRides,
     };
   }
 
@@ -170,7 +177,7 @@ export class SubscriptionsService {
     if (!priceId) {
       // Create product and price in Stripe
       const product = await stripe.products.create({
-        name: `TaxiRelay - ${plan.name}`,
+        name: `Transport Relay - ${plan.name}`,
         description: plan.description || undefined,
         metadata: { planId: plan.id },
       });
@@ -348,7 +355,7 @@ export class SubscriptionsService {
       amountCents: invoice.amount_paid,
       currency: invoice.currency.toUpperCase(),
       status: 'succeeded',
-      description: `Paiement abonnement - ${invoice.lines?.data?.[0]?.description || 'TaxiRelay'}`,
+      description: `Paiement abonnement - ${invoice.lines?.data?.[0]?.description || 'Transport Relay'}`,
     });
 
     console.log(`[Subscriptions] Payment recorded for user ${subscription.userId}`);

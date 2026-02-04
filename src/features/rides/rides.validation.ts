@@ -12,9 +12,12 @@ export const createRideSchema = z.object({
   body: z
     .object({
       zone: z.string().min(1, 'Zone is required').max(255),
-      department: z
+      departureDepartment: z
         .string()
-        .regex(/^[0-9]{2,3}$/, 'Invalid department code (e.g., 75, 92, 971)'),
+        .regex(/^[0-9]{2,3}$/, 'Invalid departure department code (e.g., 75, 92, 971)'),
+      arrivalDepartment: z
+        .string()
+        .regex(/^[0-9]{2,3}$/, 'Invalid arrival department code (e.g., 75, 92, 971)'),
       distance: z.string().min(1, 'Distance is required').max(50),
       courseType: z.enum(['normal', 'medical'], {
         errorMap: () => ({ message: 'Course type must be "normal" or "medical"' }),

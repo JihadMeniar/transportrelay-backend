@@ -11,7 +11,7 @@ initializeWebSocket(server);
 // Start server
 async function startServer() {
   try {
-    logger.info('Starting TaxiRelay Backend Server...');
+    logger.info('Starting Transport Relay Backend Server...');
 
     // Test database connection
     logger.info('Testing database connection...');

@@ -22,6 +22,7 @@ export const serverConfig = {
   apiPrefix: process.env.API_PREFIX || '/api',
   corsOrigin: parseCorsOrigins(process.env.CORS_ORIGIN, 'http://localhost:8081'),
   wsCorsOrigin: parseCorsOrigins(process.env.WS_CORS_ORIGIN, 'http://localhost:8081'),
+  adminSeedReferralCode: process.env.ADMIN_SEED_REFERRAL_CODE || 'TRANSPORTRELAY2025',
 };
 
 // Validation configuration

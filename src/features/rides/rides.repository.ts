@@ -8,6 +8,8 @@ interface RideRow {
   id: number;
   zone: string;
   department: string;
+  departure_department: string;
+  arrival_department: string;
   distance: string;
   exact_distance: string;
   published_at: Date;
@@ -38,7 +40,9 @@ interface RideRow {
 const rowToRide = (row: RideRow): Ride => ({
   id: row.id,
   zone: row.zone,
-  department: row.department,
+  department: row.departure_department,
+  departureDepartment: row.departure_department,
+  arrivalDepartment: row.arrival_department,
   distance: row.distance,
   exactDistance: row.exact_distance,
   publishedAt: row.published_at,
@@ -70,7 +74,7 @@ export class RidesRepository {
    */
   async findAll(filters: RideFilters): Promise<{ rides: Ride[]; total: number }> {
     const {
-      department,
+      userDepartment,
       status,
       courseType,
       scheduledDate,
@@ -85,9 +89,10 @@ export class RidesRepository {
     const params: any[] = [];
     let paramIndex = 1;
 
-    if (department) {
-      conditions.push(`department = $${paramIndex++}`);
-      params.push(department);
+    if (userDepartment) {
+      conditions.push(`(departure_department = $${paramIndex} OR arrival_department = $${paramIndex})`);
+      params.push(userDepartment);
+      paramIndex++;
     }
 
     if (status) {
@@ -217,17 +222,20 @@ export class RidesRepository {
   async create(data: CreateRideDTO & { publishedBy: string }): Promise<Ride> {
     const query = `
       INSERT INTO rides (
-        zone, department, distance, exact_distance, course_type, medical_type,
+        zone, department, departure_department, arrival_department,
+        distance, exact_distance, course_type, medical_type,
         scheduled_date, departure_time, arrival_time,
         client_name, client_phone, pickup, destination,
         documents_visibility, published_by, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *
     `;
 
     const values = [
       data.zone,
-      data.department,
+      data.departureDepartment, // also stored in legacy 'department' column
+      data.departureDepartment,
+      data.arrivalDepartment,
       data.distance,
       data.distance, // exact_distance = distance initially
       data.courseType,
@@ -339,7 +347,9 @@ export class RidesRepository {
       uri: row.uri,
       filePath: row.file_path,
       mimeType: row.mime_type,
+      type: row.mime_type,
       sizeBytes: row.size_bytes,
+      size: row.size_bytes,
       uploadedAt: row.uploaded_at,
     }));
   }
@@ -373,7 +383,9 @@ export class RidesRepository {
       uri: row.uri,
       filePath: row.file_path,
       mimeType: row.mime_type,
+      type: row.mime_type,
       sizeBytes: row.size_bytes,
+      size: row.size_bytes,
       uploadedAt: row.uploaded_at,
     };
   }

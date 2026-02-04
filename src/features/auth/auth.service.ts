@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authRepository } from './auth.repository';
+import { referralRepository } from './referral.repository';
 import {
   RegisterDTO,
   LoginDTO,
@@ -10,7 +11,7 @@ import {
   userRowToUser,
 } from '../../shared/types';
 import { jwtConfig } from '../../config/jwt';
-import { bcryptConfig } from '../../config';
+import { bcryptConfig, serverConfig } from '../../config';
 import { AppError } from '../../shared/middleware';
 
 export class AuthService {
@@ -24,8 +25,26 @@ export class AuthService {
       throw new AppError(409, 'Email already registered');
     }
 
+    // Validate referral code
+    const adminSeedCode = serverConfig.adminSeedReferralCode;
+    let referrerId: string | undefined;
+
+    if (adminSeedCode && data.referralCode.toUpperCase() === adminSeedCode.toUpperCase()) {
+      // Admin seed code - no referrer (for bootstrapping first users)
+      referrerId = undefined;
+    } else {
+      const referrer = await referralRepository.findUserByReferralCode(data.referralCode);
+      if (!referrer) {
+        throw new AppError(400, 'Code de parrainage invalide');
+      }
+      referrerId = referrer.id;
+    }
+
     // Hash password
     const passwordHash = await bcrypt.hash(data.password, bcryptConfig.saltRounds);
+
+    // Generate unique referral code for new user
+    const newUserReferralCode = await referralRepository.generateUniqueReferralCode(data.name);
 
     // Create user
     const user = await authRepository.create({
@@ -33,8 +52,26 @@ export class AuthService {
       password: data.password,
       name: data.name,
       phone: data.phone,
+      department: data.department,
       passwordHash,
+      referralCode: newUserReferralCode,
+      referredBy: referrerId,
     });
+
+    // Award referral bonus to referrer (if on free plan)
+    if (referrerId) {
+      try {
+        const { subscriptionsRepository } = await import('../subscriptions/subscriptions.repository');
+        const referrerSubscription = await subscriptionsRepository.getSubscriptionByUserId(referrerId);
+        const isFreePlan = !referrerSubscription || referrerSubscription.status === 'free';
+
+        if (isFreePlan) {
+          await referralRepository.createReferralBonus(referrerId, user.id, 3);
+        }
+      } catch (err) {
+        console.error('[Auth] Error awarding referral bonus:', err);
+      }
+    }
 
     // Generate tokens
     const token = this.generateAccessToken(user);
@@ -104,7 +141,7 @@ export class AuthService {
   /**
    * Refresh access token
    */
-  async refreshToken(refreshToken: string): Promise<{ token: string }> {
+  async refreshToken(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
     try {
       // Verify refresh token
       const decoded = jwt.verify(refreshToken, jwtConfig.refreshSecret) as AuthTokenPayload;
@@ -117,10 +154,11 @@ export class AuthService {
 
       const user = userRowToUser(userRow);
 
-      // Generate new access token
+      // Generate new access token and rotate refresh token
       const token = this.generateAccessToken(user);
+      const newRefreshToken = this.generateRefreshToken(user);
 
-      return { token };
+      return { token, refreshToken: newRefreshToken };
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
         throw new AppError(401, 'Refresh token expired');

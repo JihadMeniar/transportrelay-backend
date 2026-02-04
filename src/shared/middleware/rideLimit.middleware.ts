@@ -1,6 +1,7 @@
 /**
  * Ride Limit Middleware
- * Checks if free users have exceeded their monthly ride limit
+ * Checks if free users have exceeded their monthly ride acceptance limit
+ * Note: This limit only applies to ACCEPTING rides, not publishing
  */
 
 import { Response, NextFunction } from 'express';
@@ -9,8 +10,8 @@ import { subscriptionsService } from '../../features/subscriptions/subscriptions
 import { AppError } from './errorHandler.middleware';
 
 /**
- * Middleware to check if user can perform ride actions
- * Use this before createRide and acceptRide endpoints
+ * Middleware to check if user can accept rides
+ * Use this ONLY before acceptRide endpoint (publishing has no limit)
  */
 export const checkRideLimit = async (
   req: AuthRequest,

@@ -74,7 +74,7 @@ app.get('/health', (_req: Request, res: Response) => {
 // API root
 app.get(serverConfig.apiPrefix, (_req: Request, res: Response) => {
   res.status(200).json({
-    message: 'TaxiRelay API v1',
+    message: 'Transport Relay API v1',
     version: '1.0.0',
     documentation: '/api/docs',
   });
@@ -86,7 +86,7 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'TaxiRelay API Documentation',
+    customSiteTitle: 'Transport Relay API Documentation',
   })
 );
 

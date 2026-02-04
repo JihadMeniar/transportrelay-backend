@@ -23,10 +23,10 @@ export class AuthRepository {
   /**
    * Create a new user
    */
-  async create(data: CreateUserDTO & { passwordHash: string }): Promise<User> {
+  async create(data: CreateUserDTO & { passwordHash: string; referralCode: string; referredBy?: string }): Promise<User> {
     const query = `
-      INSERT INTO users (email, password_hash, name, phone, department, role, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO users (email, password_hash, name, phone, department, role, is_active, referral_code, referred_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
 
@@ -38,6 +38,8 @@ export class AuthRepository {
       data.department || null,
       'driver', // Default role
       true, // Active by default
+      data.referralCode,
+      data.referredBy || null,
     ];
 
     const result = await pool.query<UserRow>(query, values);

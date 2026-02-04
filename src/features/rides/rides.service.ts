@@ -82,17 +82,20 @@ export class RidesService {
       ride.documents = documents;
     }
 
-    // Envoyer une notification à tous les utilisateurs du département
-    if (ride.department) {
-      sendNewRideNotificationToDepartment(
-        ride.department,
-        userId,
-        ride.id,
-        ride.zone,
-        ride.distance
-      ).catch((err) => {
-        console.error('[Rides] Error sending department notification:', err);
-      });
+    // Envoyer une notification aux utilisateurs des deux départements
+    const departments = new Set([ride.departureDepartment, ride.arrivalDepartment]);
+    for (const dept of departments) {
+      if (dept) {
+        sendNewRideNotificationToDepartment(
+          dept,
+          userId,
+          ride.id,
+          ride.zone,
+          ride.distance
+        ).catch((err) => {
+          console.error('[Rides] Error sending department notification:', err);
+        });
+      }
     }
 
     return ride;

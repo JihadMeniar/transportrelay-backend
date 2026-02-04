@@ -35,6 +35,7 @@ export interface RegisterDTO {
   name: string;
   phone?: string;
   department: string;
+  referralCode: string;
 }
 
 export interface RefreshTokenDTO {

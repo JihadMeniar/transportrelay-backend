@@ -1,5 +1,6 @@
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import { Request } from 'express';
@@ -8,6 +9,12 @@ dotenv.config();
 
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '10485760'); // 10MB
 const UPLOAD_PATH = process.env.UPLOAD_PATH || './uploads';
+
+// Ensure upload directories exist
+const documentsPath = path.join(UPLOAD_PATH, 'documents');
+const attachmentsPath = path.join(UPLOAD_PATH, 'attachments');
+fs.mkdirSync(documentsPath, { recursive: true });
+fs.mkdirSync(attachmentsPath, { recursive: true });
 
 // Storage configuration
 const storage = multer.diskStorage({

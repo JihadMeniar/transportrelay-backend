@@ -56,11 +56,11 @@ router.get(
  * Create a new ride with optional documents
  * Requires authentication
  * Supports multipart/form-data with up to 5 documents
+ * Note: No ride limit for publishing - limit only applies to accepting rides
  */
 router.post(
   '/',
   authenticate,
-  checkRideLimit,
   uploadLimiter,
   uploadDocuments.array('documents', 5),
   validate(createRideSchema),

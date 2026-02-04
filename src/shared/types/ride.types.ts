@@ -22,7 +22,9 @@ export type DocumentsVisibility = 'hidden' | 'visible';
 export interface Ride {
   id: number;
   zone: string;
-  department: string;
+  department: string; // backward compat - returns departureDepartment
+  departureDepartment: string;
+  arrivalDepartment: string;
   distance: string;
   exactDistance: string;
   publishedAt: Date;
@@ -57,7 +59,8 @@ export interface Ride {
 // DTO for creating a new ride
 export interface CreateRideDTO {
   zone: string;
-  department: string;
+  departureDepartment: string;
+  arrivalDepartment: string;
   distance: string;
   courseType: CourseType;
   medicalType: MedicalType;
@@ -78,7 +81,7 @@ export interface UpdateRideStatusDTO {
 
 // Filters for querying rides
 export interface RideFilters {
-  department?: string;
+  userDepartment?: string;
   status?: RideStatus;
   courseType?: CourseType;
   scheduledDate?: string; // Filter by specific date
@@ -102,6 +105,8 @@ export interface RideRow {
   id: number;
   zone: string;
   department: string;
+  departure_department: string;
+  arrival_department: string;
   distance: string;
   exact_distance: string;
   published_at: Date;
