@@ -1,4 +1,4 @@
-# TaxiRelay Backend API
+# Transport Relay Backend API
 
 Backend API pour l'application TaxiRelay - Plateforme de partage de courses avec chat en temps réel.
 
