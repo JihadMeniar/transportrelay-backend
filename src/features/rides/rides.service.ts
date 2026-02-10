@@ -84,13 +84,16 @@ export class RidesService {
 
     // Envoyer une notification aux utilisateurs des deux départements
     const departments = new Set([ride.departureDepartment, ride.arrivalDepartment]);
+    const notifLabel = ride.departureCity && ride.arrivalCity
+      ? `${ride.departureCity} → ${ride.arrivalCity}`
+      : ride.zone || `${ride.departureDepartment} → ${ride.arrivalDepartment}`;
     for (const dept of departments) {
       if (dept) {
         sendNewRideNotificationToDepartment(
           dept,
           userId,
           ride.id,
-          ride.zone,
+          notifLabel,
           ride.distance
         ).catch((err) => {
           console.error('[Rides] Error sending department notification:', err);

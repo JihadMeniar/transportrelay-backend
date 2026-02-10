@@ -25,12 +25,16 @@ export interface Ride {
   department: string; // backward compat - returns departureDepartment
   departureDepartment: string;
   arrivalDepartment: string;
+  departureCity?: string;
+  arrivalCity?: string;
   distance: string;
   exactDistance: string;
   publishedAt: Date;
   status: RideStatus;
   courseType: CourseType;
   medicalType: MedicalType;
+  stretcherTransport: boolean;
+  notes?: string;
 
   // Scheduling information
   scheduledDate: string | null; // Format: YYYY-MM-DD
@@ -61,9 +65,13 @@ export interface CreateRideDTO {
   zone: string;
   departureDepartment: string;
   arrivalDepartment: string;
+  departureCity?: string;
+  arrivalCity?: string;
   distance: string;
   courseType: CourseType;
   medicalType: MedicalType;
+  stretcherTransport?: boolean;
+  notes?: string;
   clientName: string;
   clientPhone: string;
   pickup: string;
@@ -107,12 +115,16 @@ export interface RideRow {
   department: string;
   departure_department: string;
   arrival_department: string;
+  departure_city: string | null;
+  arrival_city: string | null;
   distance: string;
   exact_distance: string;
   published_at: Date;
   status: string;
   course_type: string;
   medical_type: string | null;
+  stretcher_transport: boolean;
+  notes: string | null;
   // Scheduling fields
   scheduled_date: string | null;
   departure_time: string | null;

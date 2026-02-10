@@ -11,18 +11,22 @@ const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
 export const createRideSchema = z.object({
   body: z
     .object({
-      zone: z.string().min(1, 'Zone is required').max(255),
+      zone: z.string().max(255).optional().default(''),
       departureDepartment: z
         .string()
         .regex(/^[0-9]{2,3}$/, 'Invalid departure department code (e.g., 75, 92, 971)'),
       arrivalDepartment: z
         .string()
         .regex(/^[0-9]{2,3}$/, 'Invalid arrival department code (e.g., 75, 92, 971)'),
+      departureCity: z.string().max(255).optional(),
+      arrivalCity: z.string().max(255).optional(),
       distance: z.string().min(1, 'Distance is required').max(50),
       courseType: z.enum(['normal', 'medical'], {
         errorMap: () => ({ message: 'Course type must be "normal" or "medical"' }),
       }),
       medicalType: z.enum(['hospitalisation', 'consultation']).optional().nullable(),
+      stretcherTransport: z.boolean().optional(),
+      notes: z.string().max(2000).optional(),
       // Scheduling fields (required)
       scheduledDate: z
         .string()

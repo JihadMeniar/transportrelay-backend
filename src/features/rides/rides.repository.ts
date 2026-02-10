@@ -10,12 +10,16 @@ interface RideRow {
   department: string;
   departure_department: string;
   arrival_department: string;
+  departure_city: string | null;
+  arrival_city: string | null;
   distance: string;
   exact_distance: string;
   published_at: Date;
   status: string;
   course_type: string;
   medical_type: string | null;
+  stretcher_transport: boolean;
+  notes: string | null;
   // Scheduling fields
   scheduled_date: string | null;
   departure_time: string | null;
@@ -43,12 +47,16 @@ const rowToRide = (row: RideRow): Ride => ({
   department: row.departure_department,
   departureDepartment: row.departure_department,
   arrivalDepartment: row.arrival_department,
+  departureCity: row.departure_city || undefined,
+  arrivalCity: row.arrival_city || undefined,
   distance: row.distance,
   exactDistance: row.exact_distance,
   publishedAt: row.published_at,
   status: row.status as any,
   courseType: row.course_type as any,
   medicalType: row.medical_type as any,
+  stretcherTransport: row.stretcher_transport || false,
+  notes: row.notes || undefined,
   // Scheduling
   scheduledDate: row.scheduled_date,
   departureTime: row.departure_time,
@@ -223,23 +231,29 @@ export class RidesRepository {
     const query = `
       INSERT INTO rides (
         zone, department, departure_department, arrival_department,
+        departure_city, arrival_city,
         distance, exact_distance, course_type, medical_type,
+        stretcher_transport, notes,
         scheduled_date, departure_time, arrival_time,
         client_name, client_phone, pickup, destination,
         documents_visibility, published_by, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
       RETURNING *
     `;
 
     const values = [
-      data.zone,
+      data.zone || '',
       data.departureDepartment, // also stored in legacy 'department' column
       data.departureDepartment,
       data.arrivalDepartment,
+      data.departureCity || null,
+      data.arrivalCity || null,
       data.distance,
       data.distance, // exact_distance = distance initially
       data.courseType,
       data.medicalType,
+      data.stretcherTransport || false,
+      data.notes || null,
       data.scheduledDate,
       data.departureTime,
       data.arrivalTime,
