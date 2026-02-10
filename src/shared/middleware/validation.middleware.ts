@@ -22,12 +22,14 @@ export const validate = (schema: ZodSchema) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
+        const details = error.errors.map((e) => ({
+          field: e.path.join('.'),
+          message: e.message,
+        }));
+        console.error('[Validation] Error on', req.method, req.path, JSON.stringify(details));
         res.status(400).json({
           error: 'Validation error',
-          details: error.errors.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
+          details,
         });
         return;
       }

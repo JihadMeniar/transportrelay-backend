@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { ridesController } from './rides.controller';
 import { authenticate, optionalAuth } from '../../shared/middleware/auth.middleware';
 import { validate } from '../../shared/middleware/validation.middleware';
@@ -63,6 +63,12 @@ router.post(
   authenticate,
   uploadLimiter,
   uploadDocuments.array('documents', 5),
+  (req: Request, _res: Response, next: NextFunction) => {
+    console.log('[Rides] POST /rides - Content-Type:', req.headers['content-type']);
+    console.log('[Rides] POST /rides - body keys:', Object.keys(req.body || {}));
+    console.log('[Rides] POST /rides - body:', JSON.stringify(req.body));
+    next();
+  },
   validate(createRideSchema),
   ridesController.createRide
 );
