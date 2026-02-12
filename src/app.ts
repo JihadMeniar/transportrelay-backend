@@ -62,16 +62,31 @@ app.use(generalLimiter);
 
 // TEMP DEBUG: Test ride validation without auth
 import { createRideSchema } from './features/rides/rides.validation';
+import { uploadDocuments } from './config/multer';
+// Test 1: Without multer
 app.post('/debug-ride-validate', (req: Request, res: Response) => {
-  console.log('[DEBUG] Content-Type:', req.headers['content-type']);
-  console.log('[DEBUG] Body type:', typeof req.body);
-  console.log('[DEBUG] Body:', JSON.stringify(req.body));
+  console.log('[DEBUG-NO-MULTER] Content-Type:', req.headers['content-type']);
+  console.log('[DEBUG-NO-MULTER] Body:', JSON.stringify(req.body));
   try {
     const result = createRideSchema.parse({ body: req.body, query: req.query, params: req.params });
-    res.json({ ok: true, validatedBody: result.body });
+    res.json({ ok: true, multer: false, validatedBody: result.body });
   } catch (err: any) {
     const details = err.errors?.map((e: any) => ({ field: e.path.join('.'), message: e.message })) || [];
-    res.status(400).json({ ok: false, error: 'Validation failed', details, bodyReceived: req.body });
+    res.status(400).json({ ok: false, multer: false, details, bodyReceived: req.body });
+  }
+});
+// Test 2: WITH multer (same as real route)
+app.post('/debug-ride-with-multer', uploadDocuments.array('documents', 5), (req: Request, res: Response) => {
+  console.log('[DEBUG-WITH-MULTER] Content-Type:', req.headers['content-type']);
+  console.log('[DEBUG-WITH-MULTER] Body type:', typeof req.body);
+  console.log('[DEBUG-WITH-MULTER] Body keys:', Object.keys(req.body || {}));
+  console.log('[DEBUG-WITH-MULTER] Body:', JSON.stringify(req.body));
+  try {
+    const result = createRideSchema.parse({ body: req.body, query: req.query, params: req.params });
+    res.json({ ok: true, multer: true, validatedBody: result.body });
+  } catch (err: any) {
+    const details = err.errors?.map((e: any) => ({ field: e.path.join('.'), message: e.message })) || [];
+    res.status(400).json({ ok: false, multer: true, details, bodyReceived: req.body });
   }
 });
 
