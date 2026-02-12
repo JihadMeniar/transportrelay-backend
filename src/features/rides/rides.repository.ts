@@ -140,7 +140,7 @@ export class RidesRepository {
     const query = `
       SELECT * FROM rides
       ${whereClause}
-      ORDER BY scheduled_date ASC NULLS LAST, departure_time ASC NULLS LAST, published_at DESC
+      ORDER BY published_at DESC, scheduled_date DESC NULLS LAST, departure_time DESC NULLS LAST
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}
     `;
     params.push(limit, offset);
