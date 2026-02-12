@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { ridesController } from './rides.controller';
 import { authenticate, optionalAuth } from '../../shared/middleware/auth.middleware';
 import { validate } from '../../shared/middleware/validation.middleware';
@@ -15,19 +15,6 @@ import {
 } from './rides.validation';
 
 const router = Router();
-
-// TEMPORARY: Debug endpoint to test validation without auth
-router.post('/debug-validate', (req: Request, res: Response) => {
-  console.log('[DEBUG] Content-Type:', req.headers['content-type']);
-  console.log('[DEBUG] Body:', JSON.stringify(req.body));
-  try {
-    const result = createRideSchema.parse({ body: req.body, query: req.query, params: req.params });
-    res.json({ ok: true, validatedBody: result.body });
-  } catch (err: any) {
-    const details = err.errors?.map((e: any) => ({ field: e.path.join('.'), message: e.message })) || [];
-    res.status(400).json({ ok: false, error: 'Validation failed', details });
-  }
-});
 
 /**
  * GET /api/rides
@@ -76,12 +63,6 @@ router.post(
   authenticate,
   uploadLimiter,
   uploadDocuments.array('documents', 5),
-  (req: Request, _res: Response, next: NextFunction) => {
-    console.log('[Rides] POST /rides - Content-Type:', req.headers['content-type']);
-    console.log('[Rides] POST /rides - body keys:', Object.keys(req.body || {}));
-    console.log('[Rides] POST /rides - body:', JSON.stringify(req.body));
-    next();
-  },
   validate(createRideSchema),
   ridesController.createRide
 );
