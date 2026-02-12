@@ -60,6 +60,21 @@ app.use(requestLogger);
 // Rate limiting
 app.use(generalLimiter);
 
+// TEMP DEBUG: Test ride validation without auth
+import { createRideSchema } from './features/rides/rides.validation';
+app.post('/debug-ride-validate', (req: Request, res: Response) => {
+  console.log('[DEBUG] Content-Type:', req.headers['content-type']);
+  console.log('[DEBUG] Body type:', typeof req.body);
+  console.log('[DEBUG] Body:', JSON.stringify(req.body));
+  try {
+    const result = createRideSchema.parse({ body: req.body, query: req.query, params: req.params });
+    res.json({ ok: true, validatedBody: result.body });
+  } catch (err: any) {
+    const details = err.errors?.map((e: any) => ({ field: e.path.join('.'), message: e.message })) || [];
+    res.status(400).json({ ok: false, error: 'Validation failed', details, bodyReceived: req.body });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
