@@ -98,6 +98,22 @@ export class AuthController {
       message: 'Password changed successfully',
     });
   });
+  /**
+   * POST /api/auth/accept-cgu
+   * Accept CGU (protected)
+   */
+  acceptCgu = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.userId;
+    const { version } = req.body;
+
+    const user = await authService.acceptCgu(userId, version || '1.0');
+
+    res.status(200).json({
+      success: true,
+      data: { user },
+      message: 'CGU accepted',
+    });
+  });
 }
 
 export const authController = new AuthController();

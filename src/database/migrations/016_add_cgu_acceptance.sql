@@ -1,0 +1,3 @@
+-- Add CGU acceptance tracking to users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS cgu_accepted_at TIMESTAMP DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS cgu_version VARCHAR(20) DEFAULT NULL;

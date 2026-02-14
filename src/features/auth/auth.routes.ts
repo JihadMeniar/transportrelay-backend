@@ -54,4 +54,11 @@ router.post('/logout', authenticate, authController.logout);
  */
 router.post('/change-password', authenticate, validate(changePasswordSchema), authController.changePassword);
 
+/**
+ * @route   POST /api/auth/accept-cgu
+ * @desc    Accept CGU/Terms of Service
+ * @access  Protected
+ */
+router.post('/accept-cgu', authenticate, authController.acceptCgu);
+
 export default router;

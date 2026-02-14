@@ -19,6 +19,8 @@ interface UserRow {
   stats_published: number;
   stats_accepted: number;
   rating: number;
+  cgu_accepted_at: Date | null;
+  cgu_version: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -42,6 +44,8 @@ export const userRowToUser = (row: UserRow): User => ({
     accepted: row.stats_accepted,
     rating: parseFloat(row.rating.toString()),
   },
+  cguAcceptedAt: row.cgu_accepted_at || null,
+  cguVersion: row.cgu_version || null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });

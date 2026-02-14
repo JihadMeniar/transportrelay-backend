@@ -198,6 +198,18 @@ export class AuthService {
   }
 
   /**
+   * Accept CGU
+   */
+  async acceptCgu(userId: string, version: string): Promise<User> {
+    await authRepository.acceptCgu(userId, version);
+    const userRow = await authRepository.findById(userId);
+    if (!userRow) {
+      throw new AppError(404, 'User not found');
+    }
+    return userRowToUser(userRow);
+  }
+
+  /**
    * Generate access token (JWT)
    */
   private generateAccessToken(user: User): string {

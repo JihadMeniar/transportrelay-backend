@@ -86,6 +86,14 @@ export class AuthRepository {
     const query = 'UPDATE users SET is_active = true, updated_at = NOW() WHERE id = $1';
     await pool.query(query, [id]);
   }
+
+  /**
+   * Accept CGU
+   */
+  async acceptCgu(userId: string, version: string): Promise<void> {
+    const query = 'UPDATE users SET cgu_accepted_at = NOW(), cgu_version = $1, updated_at = NOW() WHERE id = $2';
+    await pool.query(query, [version, userId]);
+  }
 }
 
 export const authRepository = new AuthRepository();
