@@ -68,6 +68,19 @@ export const refreshTokenSchema = z.object({
 /**
  * Validation schema for change password
  */
+/**
+ * Validation schema for accepting CGU
+ */
+export const acceptCguSchema = z.object({
+  body: z.object({
+    version: z
+      .string()
+      .max(20, 'Version is too long')
+      .optional()
+      .default('1.0'),
+  }),
+});
+
 export const changePasswordSchema = z.object({
   body: z.object({
     currentPassword: z.string().min(1, 'Current password is required'),

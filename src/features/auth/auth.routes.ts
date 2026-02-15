@@ -5,6 +5,7 @@ import {
   loginSchema,
   refreshTokenSchema,
   changePasswordSchema,
+  acceptCguSchema,
 } from './auth.validation';
 import { validate } from '../../shared/middleware/validation.middleware';
 import { authenticate } from '../../shared/middleware/auth.middleware';
@@ -59,6 +60,6 @@ router.post('/change-password', authenticate, validate(changePasswordSchema), au
  * @desc    Accept CGU/Terms of Service
  * @access  Protected
  */
-router.post('/accept-cgu', authenticate, authController.acceptCgu);
+router.post('/accept-cgu', authenticate, validate(acceptCguSchema), authController.acceptCgu);
 
 export default router;
