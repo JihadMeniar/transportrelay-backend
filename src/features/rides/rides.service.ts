@@ -155,6 +155,15 @@ export class RidesService {
       throw new AppError(403, 'Not authorized to update this ride');
     }
 
+    // Validate status transition
+    if (status === 'completed' && ride.status !== 'accepted') {
+      throw new AppError(400, 'Only accepted rides can be completed');
+    }
+
+    if (status === 'cancelled' && ride.status !== 'available' && ride.status !== 'accepted') {
+      throw new AppError(400, 'Only available or accepted rides can be cancelled');
+    }
+
     const updates: Partial<Ride> = { status };
 
     if (status === 'completed') {
