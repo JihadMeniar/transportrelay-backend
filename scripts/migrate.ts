@@ -8,7 +8,7 @@ import { pool } from '../src/config/database';
 async function runMigrations() {
   console.log('🔄 Running database migrations...\n');
 
-  const migrationsDir = path.join(__dirname, '../src/database/migrations');
+  const migrationsDir = path.join(process.cwd(), 'src/database/migrations');
   const files = fs.readdirSync(migrationsDir).sort();
 
   try {

@@ -100,9 +100,9 @@ export class RidesController {
 
     const ride = await ridesService.createRide(userId, rideData, files);
 
-    // Increment ride usage for subscription tracking
+    // Increment ride usage for subscription tracking (non-blocking)
     subscriptionsService.incrementUsage(userId, 'published').catch((err) => {
-      console.error('[Rides] Error incrementing usage:', err);
+      console.error('[Rides] Error incrementing published usage for user', userId, ':', err);
     });
 
     res.status(201).json({
