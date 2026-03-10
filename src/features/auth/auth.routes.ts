@@ -62,4 +62,11 @@ router.post('/change-password', authenticate, validate(changePasswordSchema), au
  */
 router.post('/accept-cgu', authenticate, validate(acceptCguSchema), authController.acceptCgu);
 
+/**
+ * @route   DELETE /api/auth/account
+ * @desc    Delete own account (GDPR)
+ * @access  Protected
+ */
+router.delete('/account', authenticate, authController.deleteAccount);
+
 export default router;

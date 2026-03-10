@@ -114,6 +114,20 @@ export class AuthController {
       message: 'CGU accepted',
     });
   });
+
+  /**
+   * DELETE /api/auth/account
+   * Delete own account (GDPR)
+   */
+  deleteAccount = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.userId;
+    await authService.deleteAccount(userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Account deleted successfully',
+    });
+  });
 }
 
 export const authController = new AuthController();

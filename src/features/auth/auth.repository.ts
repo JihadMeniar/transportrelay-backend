@@ -94,6 +94,39 @@ export class AuthRepository {
     const query = 'UPDATE users SET cgu_accepted_at = NOW(), cgu_version = $1, updated_at = NOW() WHERE id = $2';
     await pool.query(query, [version, userId]);
   }
+
+  /**
+   * Anonymize and deactivate user account (GDPR deletion)
+   */
+  async deleteAccount(userId: string): Promise<void> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Remove push tokens
+      await client.query('DELETE FROM push_tokens WHERE user_id = $1', [userId]);
+
+      // Anonymize personal data (keeps rides/messages for data integrity)
+      await client.query(`
+        UPDATE users SET
+          email = 'deleted_' || id || '@deleted.local',
+          name = 'Compte supprimé',
+          phone = NULL,
+          password_hash = 'deleted',
+          referral_code = NULL,
+          is_active = false,
+          updated_at = NOW()
+        WHERE id = $1
+      `, [userId]);
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 export const authRepository = new AuthRepository();

@@ -210,6 +210,17 @@ export class AuthService {
   }
 
   /**
+   * Delete account (GDPR anonymization)
+   */
+  async deleteAccount(userId: string): Promise<void> {
+    const userRow = await authRepository.findById(userId);
+    if (!userRow) {
+      throw new AppError(404, 'User not found');
+    }
+    await authRepository.deleteAccount(userId);
+  }
+
+  /**
    * Generate access token (JWT)
    */
   private generateAccessToken(user: User): string {
