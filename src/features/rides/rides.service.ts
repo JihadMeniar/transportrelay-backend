@@ -108,29 +108,15 @@ export class RidesService {
    * Accept a ride
    */
   async acceptRide(rideId: number, userId: string): Promise<Ride> {
-    const ride = await ridesRepository.findById(rideId);
-
-    if (!ride) {
-      throw new AppError(404, 'Ride not found');
-    }
-
-    if (ride.status !== 'available') {
-      throw new AppError(400, 'Ride is not available');
-    }
-
-    if (ride.publishedBy === userId) {
-      throw new AppError(400, 'Cannot accept your own ride');
-    }
-
-    const updatedRide = await ridesRepository.update(rideId, {
-      status: 'accepted',
-      acceptedBy: userId,
-      acceptedAt: new Date(),
-      documentsVisibility: 'visible',
-    });
+    // Atomic conditional UPDATE to prevent race conditions (two users accepting simultaneously)
+    const updatedRide = await ridesRepository.acceptRideAtomic(rideId, userId);
 
     if (!updatedRide) {
-      throw new AppError(500, 'Failed to update ride');
+      // Could be: ride not found, already accepted, or user is the publisher
+      const ride = await ridesRepository.findById(rideId);
+      if (!ride) throw new AppError(404, 'Ride not found');
+      if (ride.publishedBy === userId) throw new AppError(400, 'Cannot accept your own ride');
+      throw new AppError(400, 'Ride is not available');
     }
 
     return updatedRide;

@@ -333,6 +333,24 @@ export class RidesRepository {
   }
 
   /**
+   * Accept ride atomically - prevents race conditions when two users accept simultaneously
+   * Uses a conditional UPDATE that only succeeds if the ride is still available
+   */
+  async acceptRideAtomic(rideId: number, userId: string): Promise<Ride | null> {
+    const query = `
+      UPDATE rides
+      SET status = 'accepted', accepted_by = $1, accepted_at = NOW(), documents_visibility = 'visible', updated_at = NOW()
+      WHERE id = $2 AND status = 'available' AND published_by != $1
+      RETURNING *
+    `;
+    const result = await pool.query(query, [userId, rideId]);
+    if (result.rows.length === 0) return null;
+    const ride = rowToRide(result.rows[0]);
+    ride.documents = await this.findDocumentsByRideId(rideId);
+    return ride;
+  }
+
+  /**
    * Delete ride
    */
   async delete(id: number): Promise<boolean> {

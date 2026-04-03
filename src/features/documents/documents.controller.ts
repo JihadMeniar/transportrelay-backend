@@ -39,7 +39,7 @@ export class DocumentsController {
     const absolutePath = path.resolve(filePath);
 
     res.setHeader('Content-Type', mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`);
     res.sendFile(absolutePath);
   });
 
@@ -55,7 +55,7 @@ export class DocumentsController {
     const absolutePath = path.resolve(filePath);
 
     res.setHeader('Content-Type', mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(fileName)}`);
     res.sendFile(absolutePath);
   });
 

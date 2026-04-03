@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { usersController } from './users.controller';
-import { authenticate } from '../../shared/middleware/auth.middleware';
+import { authenticate, authorize } from '../../shared/middleware/auth.middleware';
 import { validate } from '../../shared/middleware/validation.middleware';
 import { updateProfileSchema, getUserByIdSchema, getUserStatsSchema, registerPushTokenSchema } from './users.validation';
 
@@ -56,13 +56,13 @@ router.delete('/push-token', authenticate, usersController.deactivatePushToken);
  * Set user priority status (admin only)
  * Priority users receive ride notifications 5 minutes before others
  */
-router.post('/priority', authenticate, usersController.setUserPriority);
+router.post('/priority', authenticate, authorize('admin'), usersController.setUserPriority);
 
 /**
  * GET /api/users/priority
  * Get all priority users (admin only)
  */
-router.get('/priority', authenticate, usersController.getPriorityUsers);
+router.get('/priority', authenticate, authorize('admin'), usersController.getPriorityUsers);
 
 /**
  * GET /api/users/:id/stats
